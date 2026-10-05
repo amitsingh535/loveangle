@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DO YOU LOVE ME? ❤️</title>
+    <meta name="description" content="Be honest. I already know the answer. 👀">
+    
+    <!-- Open Graph for sharing -->
+    <meta property="og:title" content="DO YOU LOVE ME? ❤️">
+    <meta property="og:description" content="Be honest. I already know the answer. 👀">
+    <meta property="og:type" content="website">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0f0a18;
+            --primary: #ff006e;
+            --primary-glow: rgba(255, 0, 110, 0.5);
+            --surface: rgba(255, 255, 255, 0.05);
+            --surface-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #a099ab;
+            --font: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: var(--font);
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg);
+            color: var(--text-main);
+            overflow: hidden; /* Prevents scrolling */
+            touch-action: none; /* Prevents mobile pull-to-refresh */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: radial-gradient(circle at 50% 20%, #2a0b1a 0%, var(--bg) 80%);
+        }
+
+        /* Floating Background Hearts */
+        .bg-hearts {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-heart {
+            position: absolute;
+            bottom: -50px;
+            color: rgba(255, 0, 110, 0.15);
+            font-size: 24px;
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+            100% { transform: translateY(-120vh) rotate(360deg) scale(1.5); opacity: 0; }
+        }
+
+        /* Screen Management */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            line-height: 1.1;
+            text-shadow: 0 0 30px var(--primary-glow);
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 3rem;
+            font-weight: 400;
+        }
+
+        /* Buttons Container */
+        .buttons-container {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 150px; /* Space for moving button */
+        }
+
+        /* Base Button Styles */
+        .btn {
+            padding: 1.2rem 2.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 100px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-yes {
+            background: linear-gradient(135deg, #ff006e, #c10053);
+            color: white;
+            box-shadow: 0 10px 30px var(--primary-glow);
+            z-index: 2;
+        }
+        .btn-yes:active { transform: scale(0.95); }
+
+        .btn-no {
+            background: var(--surface);
+            color: var(--text-main);
+            border: 1px solid var(--surface-border);
+            backdrop-filter: blur(10px);
+            position: absolute; /* Crucial for escaping */
+            transition: top 0.3s ease, left 0.3s ease, transform 0.3s ease, width 0.3s ease;
+            white-space: nowrap;
+            z-index: 5;
+        }
+
+        .btn-share {
+            background: white;
+            color: black;
+            width: 100%;
+            max-width: 350px;
+            margin-top: 2rem;
+            font-size: 1.2rem;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--text-muted);
+            width: 100%;
+            max-width: 350px;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+        }
+
+        /* Result Card */
+        .result-card {
+            background: linear-gradient(180deg, rgba(255,0,110,0.1) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid var(--primary-glow);
+            border-radius: 24px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            text-align: center;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .rc-title { color: var(--primary); font-size: 1.5rem; font-weight: 900; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 2px;}
+        .rc-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 1px solid var(--surface-border); padding-bottom: 0.5rem;}
+        .rc-label { color: var(--text-muted); }
+        .rc-val { font-weight: 700; color: white; }
+        .rc-msg { margin-top: 1.5rem; font-style: italic; color: #ffb3c6; font-size: 1.1rem; }
+
+        /* Easter Egg text */
+        .easter-egg-text {
+            color: var(--primary);
+            font-weight: 700;
+            margin-top: -1rem;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            text-align: center;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Animations */
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+        
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        .giant-heart {
+            font-size: 120px;
+            margin-bottom: 1rem;
+            animation: heartBeat 1.2s infinite;
+            filter: drop-shadow(0 0 40px var(--primary));
+        }
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.3); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.3); }
+            70% { transform: scale(1); }
+        }
+
+        @media (max-width: 400px) {
+            h1 { font-size: 2.8rem; }
+            .btn { font-size: 1.2rem; padding: 1rem 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Decoration -->
+    <div class="bg-hearts" id="bg-hearts"></div>
+
+    <!-- MAIN INTERACTIVE SCREEN -->
+    <div id="screen-main" class="screen active">
+        <h1>DO YOU<br>LOVE ME? ❤️</h1>
+        <p class="subtitle">Be honest. I already know the answer. 👀</p>
+
+        <div class="buttons-container" id="buttons-container">
+            <button class="btn btn-yes" onclick="triggerWin()">❤️ YES</button>
+            <!-- NO button is absolute relative to body to allow full screen escape -->
+            <button class="btn btn-no" id="btn-no" style="position: fixed;">💀 NO</button>
+        </div>
+    </div>
+
+    <!-- CELEBRATION / RESULT SCREEN -->
+    <div id="screen-result" class="screen">
+        <div class="giant-heart">❤️</div>
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">I KNEW IT. 😌</h1>
+        <p class="subtitle">You were never escaping this relationship.</p>
+
+        <div id="easter-egg-msg" class="easter-egg-text" style="display: none;"></div>
+
+        <div class="result-card">
+            <div class="rc-title">Love Confirmed</div>
+            <div class="rc-row">
+                <span class="rc-label">Compatibility</span>
+                <span class="rc-val">100%</span>
+            </div>
+            <div class="rc-row">
+                <span class="rc-label">Denial Level</span>
+                <span class="rc-val">0%</span>
+            </div>
+            <div class="rc-row">
+                <span class="rc-label">Escape Attempts</span>
+                <span class="rc-val" id="stat-attempts">0</span>
+            </div>
+            <div class="rc-row" style="border: none; margin-bottom: 0;">
+                <span class="rc-label">Final Decision</span>
+                <span class="rc-val" style="color: var(--primary);">YES ❤️</span>
+            </div>
+            <div class="rc-msg" id="rc-msg">You tried to say no, didn't you? 😂</div>
+        </div>
+
+        <p style="color: var(--text-muted); margin-top: 2rem; margin-bottom: -1rem; font-size: 0.9rem;">Now make someone else answer this.</p>
+        <button class="btn btn-share" onclick="shareSite()">🔥 SEND TO SOMEONE</button>
+        <button class="btn btn-secondary" onclick="location.reload()">🔄 Try Again</button>
+    </div>
+
+    <!-- EASTER EGG SCREEN (If they actually click NO) -->
+    <div id="screen-easter" class="screen">
+        <h1 style="font-size: 3rem; color: #fff;">WAIT...<br>YOU ACTUALLY DID IT?! 😳</h1>
+        <p class="subtitle" style="font-size: 1.5rem; margin-top: 1rem;">Respect. 🫡</p>
+        
+        <div class="result-card" style="margin-top: 2rem;">
+            <div class="rc-title" style="color: #fff; text-shadow: 0 0 10px #fff;">THE CHOSEN ONE</div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You have defeated the system.</p>
+            <div class="rc-row" style="border: none; justify-content: center;">
+                <span class="rc-val" style="font-size: 1.5rem;">Final Decision: NO 💀</span>
+            </div>
+        </div>
+
+        <button class="btn btn-share" onclick="shareSite()">🔥 CHALLENGE A FRIEND</button>
+        <button class="btn btn-secondary" onclick="location.reload()">🔄 Try Again</button>
+    </div>
+
+
+    <script>
+        // --- BACKGROUND HEARTS INITIALIZATION ---
+        const heartsContainer = document.getElementById('bg-hearts');
+        const heartSymbols = ['❤️', '💖', '💕', '✨'];
+        for (let i = 0; i < 15; i++) {
+            let el = document.createElement('div');
+            el.className = 'bg-heart';
+            el.innerText = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+            el.style.left = `${Math.random() * 100}vw`;
+            el.style.animationDuration = `${Math.random() * 5 + 5}s`;
+            el.style.animationDelay = `${Math.random() * 5}s`;
+            el.style.opacity = Math.random() * 0.5 + 0.1;
+            el.style.fontSize = `${Math.random() * 20 + 10}px`;
+            heartsContainer.appendChild(el);
+        }
+
+        // --- GAME STATE ---
+        let attempts = 0;
+        let startTime = Date.now();
+        let isEscaping = false;
+        const btnNo = document.getElementById('btn-no');
+
+        // Position NO button initially next to YES button
+        window.addEventListener('DOMContentLoaded', () => {
+            const containerRect = document.getElementById('buttons-container').getBoundingClientRect();
+            // Default center offset roughly
+            btnNo.style.top = `${containerRect.top + 50}px`;
+            let screenWidth = window.innerWidth;
+            if(screenWidth > 400) {
+                btnNo.style.left = `${(screenWidth/2) + 20}px`; 
+            } else {
+                btnNo.style.left = `${(screenWidth/2) + 10}px`; 
+            }
+        });
+
+        const messages = [
+            "Are you sure? 👀",
+            "Nice try 😂",
+            "Too slow.",
+            "You thought I'd let you?",
+            "Bro is fighting for his life 💀",
+            "JUST SAY YES 😭",
+            "Why are you like this?",
+            "NO 😭",
+            "Okay fine...",
+            "Still no. 😂"
+        ];
+
+        // --- ESCAPE LOGIC ---
+        function moveButton(e) {
+            if(e) e.preventDefault(); // Stop default touch behaviors
+
+            if (isEscaping) return;
+            isEscaping = true;
+
+            attempts++;
+
+            // Update Text
+            let msgIndex = attempts - 1;
+            if (msgIndex >= messages.length) {
+                msgIndex = Math.floor(Math.random() * (messages.length - 7)) + 7; 
+            }
+            btnNo.innerText = messages[msgIndex];
+
+            // Make it slightly smaller progressively
+            let scale = Math.max(0.6, 1 - (attempts * 0.05));
+            
+            // Calculate random position strictly inside viewport bounds
+            const btnWidth = btnNo.offsetWidth;
+            const btnHeight = btnNo.offsetHeight;
+            const maxX = window.innerWidth - btnWidth - 20;
+            const maxY = window.innerHeight - btnHeight - 20;
+            
+            const randomX = Math.max(20, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(20, Math.floor(Math.random() * maxY));
+
+            btnNo.style.transform = `scale(${scale})`;
+            btnNo.style.left = `${randomX}px`;
+            btnNo.style.top = `${randomY}px`;
+
+            // Reset flag
+            setTimeout(() => { isEscaping = false; }, 200);
+        }
+
+        // Event Listeners for Escaping
+        btnNo.addEventListener('mouseover', moveButton);
+        btnNo.addEventListener('touchstart', moveButton, {passive: false});
+
+        // EASTER EGG: If they actually manage to click NO (e.g. via keyboard Tab+Enter or insane speed)
+        btnNo.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-easter').classList.add('active');
+            fireConfetti(['#ffffff', '#a099ab']); // grayscale/silver confetti
+        });
+
+
+        // --- WIN LOGIC (YES BUTTON) ---
+        function triggerWin() {
+            const endTime = Date.now();
+            const durationInSeconds = (endTime - startTime) / 1000;
+
+            // Screen Shake Effect
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 500);
+
+            // Confetti Explosion
+            fireConfetti(['#ff006e', '#ffbe0b', '#fb5607', '#8338ec', '#3a86ff']);
+            setTimeout(() => fireConfetti(['#ff006e', '#ffffff']), 250);
+            setTimeout(() => fireConfetti(['#ff006e']), 500);
+
+            // Switch Screen
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-result').classList.add('active');
+
+            // Populate Data
+            document.getElementById('stat-attempts').innerText = attempts;
+
+            // Handle Easter Eggs in Result
+            const eggEl = document.getElementById('easter-egg-msg');
+            const msgEl = document.getElementById('rc-msg');
+
+            if (durationInSeconds < 2 && attempts === 0) {
+                eggEl.style.display = 'block';
+                eggEl.innerText = "THAT WAS SUSPICIOUSLY FAST 👀";
+                msgEl.innerText = "Didn't even hesitate. Respect. ❤️";
+            } else if (durationInSeconds > 15 && attempts > 4) {
+                eggEl.style.display = 'block';
+                eggEl.innerText = `Bro spent ${Math.round(durationInSeconds)} seconds trying to escape 💀`;
+                msgEl.innerText = "I admire the dedication, but you still lost. 😂";
+            } else if (attempts === 0) {
+                msgEl.innerText = "Good choice. Very cooperative. 😌";
+            }
+        }
+
+        function fireConfetti(colors) {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: colors,
+                zIndex: 100
+            });
+        }
+
+        // --- VIRAL SHARING ---
+        function shareSite() {
+            const shareData = {
+                title: 'DO YOU LOVE ME? ❤️',
+                text: 'I found a ridiculous website 😂 Try answering this honestly: Do you love me?',
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                navigator.share(shareData).catch(err => console.log('Share canceled', err));
+            } else {
+                navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                alert("Link copied! Send it to someone 😂");
+            }
+        }
+    </script>
+</body>
+</html>
